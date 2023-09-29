@@ -1,0 +1,42 @@
+---
+title: "p8105_hw2_th3072"
+author: "Tianyou He"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+# Problem 1
+
+```{r}
+library(tidyverse)
+```
+## part 1 `clean the data in pols-month.csv`
+```{r}
+pols <- read.csv("./hw2_data/pols-month.csv")
+
+# Separate mon variable
+pols_clean <- pols %>% 
+  separate(mon, into = c("year", "month", "day"), sep = "-") %>% 
+  mutate(
+    month = month.abb[as.numeric(month)], # Convert month number to name
+    president = ifelse(!is.na(prez_dem), "dem", "gop") # Create president variable
+  ) %>% 
+  select(-prez_dem, -prez_gop, -day) # Remove unwanted columns
+```
+
+## part 2 `clean the data in snp.csv`
+```{r}
+snp <- read.csv("./hw2_data/snp.csv")
+
+snp_clean <- snp %>% 
+  separate(date, into = c("year", "month", "day"), sep = "-") %>% 
+  mutate(month = month.abb[as.numeric(month)]) %>% 
+  select(year, month, everything()) %>% # Organize year and month as the leading columns
+  arrange(year, month) %>% 
+  select(-day) # Remove day column
+
+```
+
