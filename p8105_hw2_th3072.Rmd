@@ -6,37 +6,150 @@ output: github_document
 
 ```{r}
 library(tidyverse)
+library(readxl)
 ```
 
 # Problem 1
-
-```{r}
-library(tidyverse)
-```
 ## part 1 `clean the data in pols-month.csv`
 ```{r}
-pols <- read.csv("./hw2_data/pols-month.csv")
-
-# Separate mon variable
-pols_clean <- pols %>% 
-  separate(mon, into = c("year", "month", "day"), sep = "-") %>% 
+pols = 
+  read.csv("./hw2_data/pols-month.csv")|>
+  separate(mon, into = c("year", "month", "day"), convert = TRUE) |> 
   mutate(
-    month = month.abb[as.numeric(month)], # Convert month number to name
-    president = ifelse(!is.na(prez_dem), "dem", "gop") # Create president variable
-  ) %>% 
-  select(-prez_dem, -prez_gop, -day) # Remove unwanted columns
+    month = month.abb[as.numeric(month)], 
+    president = recode (prez_gop, "0" = "dem", "1" = "gop", "2" = "gop")
+    ) |>
+  select(-prez_dem, -prez_gop, -day) 
 ```
 
 ## part 2 `clean the data in snp.csv`
 ```{r}
-snp <- read.csv("./hw2_data/snp.csv")
 
-snp_clean <- snp %>% 
-  separate(date, into = c("year", "month", "day"), sep = "-") %>% 
-  mutate(month = month.abb[as.numeric(month)]) %>% 
-  select(year, month, everything()) %>% # Organize year and month as the leading columns
-  arrange(year, month) %>% 
-  select(-day) # Remove day column
+snp =
+  read.csv("./hw2_data/snp.csv")|>
+  separate(date, into = c("month", "day", "year"), convert = TRUE)|>
+  mutate(month = month.abb[as.numeric(month)], year = ifelse(year >=50, 1900+year, 2000+year))|>
+  select(year, month, everything())|>
+  arrange(year, month)|>
+  select(-day)
+```
+
+## part 3 `tidy the unemployment data`
+```{r}
+unemployment = 
+  read.csv("./hw2_data/unemployment.csv")|>
+  rename(year = Year)|>
+  pivot_longer(
+    Jan:Dec,
+    names_to = "month",
+    values_to = "unemployment_rate"
+  )
+```
+
+## part 4 `merge data`
+```{r}
+merged_data <- pols|> 
+  left_join(snp, by = c("year","month"))|>
+  left_join(unemployment, by = c("year", "month"))
+```
+
+# Problem 2
+
+## Mr. Trash Whell
+```{r}
+homes_per_ton <- 500/30
+```
+
+```{r}
+mr_trash_wheel = 
+  read_excel("./hw2_data/202207 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel")|>
+  rename(
+    weight = `Weight (tons)`,
+    volume = `Volume (cubic yards)`,
+    plastic_bottles = `Plastic Bottles`,
+    polystyrene = `Polystyrene`,
+    cigarette_butts = `Cigarette Butts`,
+    glass_bottles = `Glass Bottles`,
+    grocery_bags = `Grocery Bags`,
+    chip_bags = `Chip Bags`,
+    sports_ball = `Sports Balls`,
+    homes_powered = `Homes Powered*`
+  )|>
+  select(weight, volume, plastic_bottles,polystyrene, cigarette_butts, glass_bottles, grocery_bags, chip_bags, sports_ball, homes_powered)|>
+  mutate(homes_powered = weight * homes_per_ton)|>
+  filter(!is.na(weight),
+         !is.na(volume),
+         !is.na(plastic_bottles),
+         !is.na(polystyrene),
+         !is.na(cigarette_butts),
+         !is.na(glass_bottles),
+         !is.na(grocery_bags),
+         !is.na(chip_bags),
+         !is.na(sports_ball),
+         !is.na(homes_powered))|>
+  mutate( source = "mr_trash_wheel")
+```
+
+## Professor Trash Wheel
+```{r}
+professor_trash_wheel = 
+  read_excel("./hw2_data/202207 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel")|>
+  rename(
+    weight = `Weight (tons)`,
+    volume = `Volume (cubic yards)`,
+    plastic_bottles = `Plastic Bottles`,
+    polystyrene = `Polystyrene`,
+    cigarette_butts = `Cigarette Butts`,
+    glass_bottles = `Glass Bottles`,
+    grocery_bags = `Grocery Bags`,
+    chip_bags = `Chip Bags`,
+    homes_powered = `Homes Powered*`
+  )|>
+  select(weight, volume, plastic_bottles,polystyrene, cigarette_butts, glass_bottles, grocery_bags, chip_bags, homes_powered)|>
+  mutate(homes_powered = weight * homes_per_ton)|>
+  filter(!is.na(weight),
+         !is.na(volume),
+         !is.na(plastic_bottles),
+         !is.na(polystyrene),
+         !is.na(cigarette_butts),
+         !is.na(glass_bottles),
+         !is.na(grocery_bags),
+         !is.na(chip_bags),
+         !is.na(homes_powered))|> 
+  mutate(source = "professor_trash_wheel")
+```
+
+## Gwynnda Trash Wheel
+```{r}
+Gwynnda_trash_wheel = 
+  read_excel("./hw2_data/202207 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel")|>
+  rename(
+    weight = `Weight (tons)`,
+    volume = `Volume (cubic yards)`,
+    plastic_bottles = `Plastic Bottles`,
+    polystyrene = `Polystyrene`,
+    cigarette_butts = `Cigarette Butts`,
+    homes_powered = `Homes Powered*`
+  )|>
+  select(weight, volume, plastic_bottles,polystyrene, cigarette_butts, homes_powered)|>
+  mutate(homes_powered = weight * homes_per_ton)|>
+  filter(!is.na(weight),
+         !is.na(volume),
+         !is.na(plastic_bottles),
+         !is.na(polystyrene),
+         !is.na(cigarette_butts),
+         !is.na(homes_powered))|>
+  mutate( source = "Gwynnda_trash_wheel")
+```
+
+```{r}
+all_data <- bind_rows( mr_trash_wheel, professor_trash_wheel, Gwynnda_trash_wheel)
+```
+
+# Problem 3
+
+```{r}
+read.csv("./hw2_data/MCI_baseline.csv")
 
 ```
 
