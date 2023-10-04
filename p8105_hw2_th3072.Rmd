@@ -207,15 +207,15 @@ baseline$apoe4 <- ifelse(baseline$apoe4 == 1, "carrier",
 
 
 baseline <- baseline|>
-  subset(age_at_study < age_onset_MCI_and_missing| age_onset_MCI_and_missing == ".")
+  filter(age_at_study < age_onset_MCI_and_missing| age_onset_MCI_and_missing == ".")
 ```
-baseline <- baseline|>
-  subset(age_at_study < age_onset_MCI_and_missing| age_onset_MCI_and_missing = ".")
-  baseline <- baseline[baseline$age_at_study < baseline$age_onset_MCI_and_missing,]
+
 
 ```{r}
 n_participants <- nrow(baseline_origin)
-n_mci <- nrow(baseline)
+only_mci <- baseline |>
+  filter(age_at_study < age_onset_MCI_and_missing)
+n_mci <- nrow(only_mci)
 
 baseline$age_at_study <- as.numeric(baseline$age_at_study)
 avg_age <- mean(baseline$age_at_study, na.rm = TRUE)
@@ -224,6 +224,7 @@ women = filter(baseline, sex =="female")
 women_carrier = filter(baseline,  sex == "female", apoe4 == "carrier")
 women_apoe4 <- nrow(women_carrier)/nrow(women)
 ```
+`r women_apoe4`
 
 ## amyloid data
 ```{r}
