@@ -88,6 +88,8 @@ mr_trash_wheel =
          !is.na(sport_balls),
          !is.na(homes_powered))|>
   mutate( source = "mr_trash_wheel")
+
+mr_trash_wheel <- mr_trash_wheel[-nrow(mr_trash_wheel),]
 ```
 
 ## Professor Trash Wheel
@@ -117,8 +119,11 @@ professor_trash_wheel =
          !is.na(wrappers),
          !is.na(homes_powered))|> 
   mutate(source = "professor_trash_wheel")
+
+professor_trash_wheel <-professor_trash_wheel[-nrow(professor_trash_wheel),]
+
+total_weight <- sum(professor_trash_wheel$weight)
 ```
-216.26 tons
 
 ## Gwynnda Trash Wheel
 ```{r}
@@ -145,6 +150,8 @@ Gwynnda_trash_wheel =
          !is.na(wrappers),
          !is.na(homes_powered))|>
   mutate( source = "Gwynnda_trash_wheel")
+
+Gwynnda_trash_wheel <-Gwynnda_trash_wheel[-nrow(Gwynnda_trash_wheel),]
 ```
 
 ```{r}
@@ -164,7 +171,16 @@ gwynnda_cig_filter = filter(gwynnda_cig, Year == "2021", Month == "July")
 
 gwynnda_cig_sum = sum(gwynnda_cig_filter$cigarette_butts)
 ```
-16300
+
+**brief description**
+
+There are four dataset here: `mr_trash_wheel`, `professor_trash_wheel`, `Gwynnda_trash_wheel`, and `all_data`.
+584 observation for mr_trash_whell, 105 observation for professor_trash_wheel,and 38 observation for Gwynnda_trash_wheel.
+
+For `all_data`, there are 727 observation and key variables for these four datasets are `weight` and `home_powered`. 
+
+The total weight of trash collected by `professor_trash_wheel` here is `r total_weight` and the total number of cigarette butts collected by Gwynnda in July of 2021 is `r gwynnda_cig_sum`.
+
 
 # Problem 3
 
@@ -189,12 +205,13 @@ baseline$sex <- ifelse(baseline$sex ==1, "male",
 baseline$apoe4 <- ifelse(baseline$apoe4 == 1, "carrier",
                          ifelse(baseline$apoe4 == 0, "non-carrier", "apoe4")) # change 1 and 0 to carrier and non-carrier
 
-baseline$age_onset_MCI_and_missing[baseline$age_onset_MCI_and_missing == "."] <- NA #change "." into NA
-baseline <- na.omit(baseline) #omit NA
 
-baseline <- baseline[baseline$age_at_study < baseline$age_onset_MCI_and_missing,]
+baseline <- baseline|>
+  subset(age_at_study < age_onset_MCI_and_missing| age_onset_MCI_and_missing == ".")
 ```
-
+baseline <- baseline|>
+  subset(age_at_study < age_onset_MCI_and_missing| age_onset_MCI_and_missing = ".")
+  baseline <- baseline[baseline$age_at_study < baseline$age_onset_MCI_and_missing,]
 
 ```{r}
 n_participants <- nrow(baseline_origin)
@@ -203,8 +220,9 @@ n_mci <- nrow(baseline)
 baseline$age_at_study <- as.numeric(baseline$age_at_study)
 avg_age <- mean(baseline$age_at_study, na.rm = TRUE)
 
+women = filter(baseline, sex =="female")
 women_carrier = filter(baseline,  sex == "female", apoe4 == "carrier")
-women_apoe4 <- nrow(women_carrier)/nrow(baseline)
+women_apoe4 <- nrow(women_carrier)/nrow(women)
 ```
 
 ## amyloid data
@@ -227,7 +245,7 @@ in_baseline = anti_join(baseline, amyloid, by = "id")# in baseline not in amyloi
 ```
 
 ```{r}
-in_amyloid = anti_join(amyloid, baseline, by = "id")
+in_amyloid = anti_join(amyloid, baseline, by = "id")# in amyloid not in baseline
 ```
 
 ```{r}
@@ -235,4 +253,6 @@ combined <- inner_join(baseline, amyloid, by = "id")
 write_csv(combined, "./hw2_data/ combined baseline and amyloid.csv")
 ```
 
+
+**brief discription **
 
